@@ -1,60 +1,47 @@
 version: 1
-created_at: "auto"
-changes_from_previous: "Initial baseline script"
+script: |
+  OPENING:
+  "Hi [name], this is Alex from CloudSync Pro. I know I'm calling out of the blue — I'll be quick. We help companies like yours cut file-sharing headaches and lock down their data. Quick question: how's your team currently handling cloud storage and collaboration?"
 
-script:
-  opening: >
-    Hi {customer_name}, this is Alex from CloudSync Pro. I noticed
-    {company} has been growing — congratulations! I'm reaching out because
-    we help companies like yours streamline collaboration and secure cloud
-    storage. Do you have a quick minute?
+  DISCOVERY QUESTIONS:
+  1. "How are you currently sharing files across your team?"
+  2. "What's your biggest frustration with your current setup?"
+  3. "How important is security and compliance for your organization?"
+  4. "How many people on your team need access to shared files daily?"
+  5. "Have you looked at switching tools recently, or is this the first time it's come up?"
 
-  value_propositions:
-    - hook: "team collaboration"
-      pitch: >
-        Our platform lets your team collaborate in real-time with built-in
-        version control. Companies like yours have seen a 40% improvement
-        in project delivery times.
-    - hook: "security"
-      pitch: >
-        We provide end-to-end encryption and SOC 2 compliance out of the box.
-        Your data is protected at rest and in transit.
-    - hook: "cost efficiency"
-      pitch: >
-        At $49 per user per month, you get storage, collaboration, and security
-        in one platform — replacing 2-3 separate tools most companies use.
+  VALUE PROPOSITIONS:
+  - End-to-end encryption → "Your data stays yours. Even we can't read it. So you never end up in a breach headline."
+  - 99.99% uptime → "No more Monday morning outages killing productivity."
+  - 200+ integrations → "Plugs right into Slack, Jira, Salesforce — whatever you already use. Zero learning curve."
+  - Free migration → "We move everything over for you. Your team doesn't lose a single day."
+  - Free 14-day trial → "No credit card, no commitment. Just try it with your team and see."
 
-  objection_handlers:
-    "too expensive": >
-      I understand budget matters. How much are you currently spending on
-      separate storage, collaboration, and security tools combined? Most
-      clients actually save 30% by consolidating.
-    "already using competitor": >
-      That's great you have a solution. Many clients switched from competitors
-      for our 200+ integrations and 99.99% uptime. Would a quick comparison
-      be worth your time?
-    "need to check with manager": >
-      Absolutely. Would it help if I sent a one-page ROI summary for your
-      manager? I can also join a brief call with both of you.
-    "not interested / no time": >
-      I respect your time. Could I send a 2-minute video overview? If it
-      catches your eye, we can chat when convenient.
-    "send me an email": >
-      Happy to! What's your biggest pain point with your current setup so
-      I can tailor the info?
+  OBJECTION RESPONSES:
+  - "Too expensive" → "Totally fair question. Most of our customers actually reduced total IT spend by about 30% once they consolidated tools. Want me to run a quick ROI estimate for your team size?"
+  - "Already have a solution" → "Makes sense — you wouldn't be doing your job if you didn't. Out of curiosity, if you could wave a magic wand and fix one thing about your current setup, what would it be?"
+  - "Not interested" → "I hear you, and I respect that. Just out of curiosity — is it the timing, or is cloud storage genuinely a solved problem for you? Either way, I appreciate the honesty."
+  - "Send me an email" → "Happy to! So I send you something actually relevant and not just a generic brochure — what's your team's biggest pain point with file sharing right now?"
+  - "No budget" → "Completely understand, especially right now. Just so you know, most customers save enough to make it budget-neutral. Would it be worth a 5-minute look at how, even if it's for next quarter's planning?"
+  - "Need to talk to my boss" → "Of course. What would make the strongest case to them? I can put together a one-pager with ROI numbers tailored to your setup."
 
-  closing:
-    primary: >
-      Based on what you've shared, CloudSync Pro could really help {company}.
-      Would you be open to a 14-day free trial so your team can try it?
-    fallback: >
-      I understand now might not be ideal. Can I schedule a 15-minute demo
-      next week? If it's not worth your time, I'll send a $25 coffee gift
-      card for the trouble.
+  CLOSING TECHNIQUES:
+  - Trial close: "If I could show you this saves your team 5 hours a week, would that be worth a 15-minute demo?"
+  - Assumptive close: "Let me get you set up with a trial — what email should I send the link to?"
+  - Alternative close: "Would next Tuesday or Thursday work better for a quick demo?"
 
-  guidelines:
-    - "Keep responses to 2-3 sentences max unless asked for detail"
-    - "Mirror the customer's energy and pace"
-    - "Ask one question at a time"
-    - "If the customer seems disengaged, pivot to asking about their pain points"
-    - "Never be pushy — if they say no twice, exit gracefully"
+  CALL FLOW:
+  1. Open with name + company + one-sentence value prop + qualifying question
+  2. Listen to their answer — don't pitch yet
+  3. Ask 2-3 discovery questions based on what they said
+  4. Present 1-2 relevant value props (tied to their specific pain)
+  5. Handle objections with empathy first, then data
+  6. Close with a specific next step (demo, trial, follow-up date)
+  7. If firm no — exit gracefully, leave door open
+
+  TONE GUIDELINES:
+  - Be conversational, not scripted
+  - Match the customer's energy (rushed → be concise, chatty → build rapport)
+  - Never talk for more than 3 sentences without asking a question
+  - Use their name naturally
+  - Smile — it comes through in your voice

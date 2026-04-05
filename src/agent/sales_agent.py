@@ -1,33 +1,47 @@
 """
-Sales Agent: conducts the sales call using the active script.
+Sales agent — delegates to Dify chatbot app.
 """
 
-from src.llm_client import chat
-from src.agent.prompts import get_sales_agent_system_prompt
+from src.dify_client import DifyClient
 
 
 class SalesAgent:
-    def __init__(self, script: dict, product_config: dict):
-        self.script = script
-        self.product = product_config
-        self.system_prompt = get_sales_agent_system_prompt(script, product_config)
-        self.messages = [{"role": "system", "content": self.system_prompt}]
+    """Sales agent orchestrated through Dify."""
 
-    def get_opening(self, customer_name: str, company: str) -> str:
+    def __init__(self, dify_client: DifyClient, current_script: str = ""):
+        self.client = dify_client
+        self.conversation_id = ""
+        self.current_script = current_script
+
+    def set_script(self, script: str):
+        """Update the script for future calls."""
+        self.current_script = script
+
+    def reset(self):
+        """Reset for a new call."""
+        self.conversation_id = ""
+
+    def open(self) -> str:
         """Generate the opening line of the call."""
-        user_msg = (
-            f"You are calling {customer_name} at {company}. "
-            f"They just picked up the phone and said 'Hello?'. "
-            f"Deliver your opening."
+        result = self.client.chat(
+            query=(
+                "[START CALL] The customer just picked up the phone. "
+                "Deliver your opening — name, company, reason for calling, and a qualifying question."
+            ),
+            user="sales-agent",
+            conversation_id="",
+            inputs={"current_script": self.current_script},
         )
-        self.messages.append({"role": "user", "content": user_msg})
-        response = chat(self.messages, temperature=0.8)
-        self.messages.append({"role": "assistant", "content": response})
-        return response
+        self.conversation_id = result["conversation_id"]
+        return result["answer"]
 
     def respond(self, customer_message: str) -> str:
-        """Respond to what the customer just said."""
-        self.messages.append({"role": "user", "content": customer_message})
-        response = chat(self.messages, temperature=0.7)
-        self.messages.append({"role": "assistant", "content": response})
-        return response
+        """Get the agent's next response."""
+        result = self.client.chat(
+            query=customer_message,
+            user="sales-agent",
+            conversation_id=self.conversation_id,
+            inputs={"current_script": self.current_script},
+        )
+        self.conversation_id = result["conversation_id"]
+        return result["answer"]

@@ -5,30 +5,42 @@ iteratively improves its own sales script through automated feedback loops.
 
 ## Architecture
 ![alt text](image.png)
+
 ## Self-Improvement Loop
 
-1. **Simulate** — Agent runs N sales calls against diverse customer personas
-2. **Evaluate** — Each call transcript is analyzed for outcome, objection handling, strengths/weaknesses
-3. **Optimize** — Aggregated evaluations feed into the Script Optimizer, which rewrites the script
+1. **Simulate** — Agent runs N sales calls against diverse customer personas via Dify chatbot apps
+2. **Evaluate** — Each call transcript is scored locally using rule-based heuristics (engagement, objection handling, discovery, closing)
+3. **Optimize** — Aggregated scores and transcripts feed into a Dify workflow that rewrites the script
 4. **Repeat** — New script is used for the next batch of calls
 
 ## Tech Stack
 
-| Component     | Choice               | Reason                                    |
-|---------------|----------------------|-------------------------------------------|
-| LLM           | DeepSeek-V3 (Chat)   | Cheap, powerful, no China/HK restrictions |
-| Voice TTS     | edge-tts             | Free, global, no API key needed           |
-| Voice STT     | Keyboard (mock)      | Prototype; swap for FunASR/Whisper later  |
-| Database      | SQLite               | Zero setup, sufficient for prototype      |
-| Script Format | YAML (versioned)     | Human-readable, easy to diff              |
-| Display       | Rich (Python)        | Beautiful terminal output                 |
+| Component        | Choice             | Reason                                      |
+|------------------|--------------------|----------------------------------------------|
+| LLM Orchestration| Dify               | Visual flow editing, easy API, multi-app     |
+| Sales Agent      | Dify Chatbot App   | Maintains conversation context automatically |
+| Customer Sim     | Dify Chatbot App   | Persona-driven via input variables           |
+| Script Optimizer | Dify Workflow App  | Structured refinement pipeline               |
+| Scoring          | Rule-based (local) | Fast, deterministic, no extra API calls      |
+| Database         | SQLite             | Zero setup, sufficient for prototype         |
+| Script Format    | YAML (versioned)   | Human-readable, easy to diff                 |
+
+## Dify Setup
+
+You need **three Dify apps** configured before running:
+
+1. **Sales Agent (Chatbot)** — System prompt instructs it to act as a sales rep. Accepts a `current_script` input variable containing the active sales script.
+2. **Customer Simulator (Chatbot)** — System prompt instructs it to role-play a customer. Accepts a `persona` input variable with the persona description.
+3. **Script Refiner (Workflow)** — Takes `current_script`, `transcripts`, and `metrics` as inputs. Outputs an improved script.
+
+Each app provides an API key that goes into `config.yaml`.
 
 ## Setup
 
 ```bash
-# Prerequisites: Python 3.10+ installed, added to PATH
+# Prerequisites: Python 3.10+
 
-# Clone / create project directory
+# Clone / enter project directory
 cd g1-call-center-agent
 
 # Create and activate virtual environment
@@ -39,135 +51,116 @@ python -m venv venv
 # Install dependencies
 pip install -r requirements.txt
 
-# Configure API key
-# Edit config.yaml → set deepseek.api_key to your key
+# Configure
+# Copy config.example.yaml to config.yaml
+# Set your three Dify app API keys and base URL
 ```
 
 ## Running
 
 ```bash
-# Full automated demo (3 iterations × 3 calls)
-python run.py
+# Full automated simulation (default: 3 iterations × 3 calls)
+python main.py
 
-# Interactive mode (you play the customer)
-python run_interactive.py
+# Override iteration count and calls per iteration
+python main.py --iterations 5 --calls 5
+
+# View report from most recent run
+python main.py --report
 ```
 
 ## Configuration
 
-Edit config.yaml to adjust:
+Edit `config.yaml`:
 
 ```yaml
-simulation.num_iterations — number of improvement cycles (default: 3)
-simulation.calls_per_iteration — calls per cycle (default: 3)
-simulation.max_turns_per_call — max conversation turns (default: 14)
-voice.enabled — enable TTS for interactive mode (default: false)
+dify:
+  base_url: "https://api.dify.ai/v1"
+  sales_agent_api_key: "app-..."    # Dify chatbot app for the sales agent
+  customer_api_key: "app-..."       # Dify chatbot app for customer simulation
+  refiner_api_key: "app-..."        # Dify workflow app for script refinement
+
+simulation:
+  num_iterations: 3              # Number of improvement cycles
+  calls_per_iteration: 3         # Calls per cycle
+  max_turns_per_call: 14         # Max conversation turns before ending
 ```
 
 ## Project Structure
 
 ```
-├── run.py                    # Entry point: automated demo
-├── run_interactive.py        # Entry point: interactive mode
-├── config.yaml               # API keys, simulation settings
-├── requirements.txt
+├── main.py                        # Entry point: CLI with --iterations, --calls, --report
+├── config.yaml                    # Dify API keys and simulation settings
+├── config.example.yaml            # Template config (no secrets)
+├── requirements.txt               # Python dependencies
+├── image.png                      # Architecture diagram
 ├── scripts/
-│   ├── v1.yaml               # Initial baseline script
-│   ├── v2.yaml               # (generated) Iteration 1 optimized
-│   └── v3.yaml               # (generated) Iteration 2 optimized
+│   └── v1.yaml                    # Initial baseline sales script
+│   └── v2.yaml                    # (generated) Iteration 1 optimized
+│   └── v3.yaml                    # (generated) Iteration 2 optimized
 ├── data/
-│   ├── personas.json          # Customer persona definitions
-│   ├── calls.db               # (generated) SQLite results database
-│   └── transcripts/           # (generated) Full call logs as JSON
+│   └── calls.db                   # (generated) SQLite results database
 ├── src/
-│   ├── llm_client.py          # DeepSeek API wrapper with retry
-│   ├── main.py                # Main orchestration loop
+│   ├── __init__.py
+│   ├── dify_client.py             # Dify API wrapper (chat + workflow, with retry)
 │   ├── agent/
-│   │   ├── prompts.py         # All prompt templates
-│   │   ├── sales_agent.py     # Sales agent LLM wrapper
-│   │   └── customer_simulator.py  # Customer persona simulator
+│   │   ├── __init__.py
+│   │   ├── sales_agent.py         # Sales agent: delegates to Dify chatbot
+│   │   └── customer.py            # Customer simulator: persona selection + Dify chatbot
 │   ├── pipeline/
-│   │   ├── conversation_runner.py # Manages turn-by-turn conversation
-│   │   ├── outcome_evaluator.py   # Structured call evaluation
-│   │   └── script_optimizer.py    # Script improvement engine
-│   ├── storage/
-│   │   ├── db.py              # SQLite operations
-│   │   └── script_store.py    # YAML script versioning
-│   └── voice/
-│       ├── tts.py             # edge-tts wrapper
-│       └── stt.py             # Mock STT (keyboard input)
-├── README.md
-└── evaluation.md
+│   │   ├── __init__.py
+│   │   ├── runner.py              # Main simulation loop: calls → score → refine → repeat
+│   │   ├── scorer.py              # Rule-based call transcript scoring
+│   │   └── refiner.py             # Triggers Dify workflow for script improvement
+│   └── storage/
+│       ├── __init__.py
+│       └── database.py            # SQLite: stores calls, scores, iterations
+└── README.md
 ```
 
-## Improvement Logic Documentation
+## Scoring Dimensions
 
-Each script version records changes in changes_from_previous. Example:
+Each call is scored locally (no LLM needed) on four dimensions, each 0–10:
 
-```yaml
-Iteration 1 → 2:
-- CHANGED: Price objection handler now leads with "free trial" instead of
-  "ROI comparison" (ROI approach failed in 2/2 price-sensitive calls)
-- ADDED: "migration risk" objection handler (Lisa raised it, no handler existed)
-- KEPT: Opening line (worked well — 3/3 customers engaged past opening)
-```
+| Dimension           | What It Measures                                                  |
+|---------------------|-------------------------------------------------------------------|
+| Engagement          | Customer response length, buying signals, negative signals, conversation length |
+| Objection Handling  | Whether objections were acknowledged empathetically and resolved  |
+| Discovery           | Number and quality of open-ended questions from the agent         |
+| Closing             | Whether the agent attempted a close and whether the customer agreed to a next step |
 
-All changes are data-driven, citing specific call outcomes.
+An **overall** score is the equally-weighted average of all four. An **appointment** flag tracks whether the customer explicitly agreed to a demo, trial, or meeting.
 
----
+## Customer Personas
 
-### `evaluation.md`
-```markdown
-# Self-Assessment & Trade-Off Documentation
+Six built-in personas provide variety across calls:
 
-## What Works Well
+- **Skeptical IT Manager** — hates sales calls, demands ROI numbers
+- **Curious Startup Founder** — open but budget-conscious, asks many questions
+- **Friendly Office Manager** — non-technical, worried about migration disruption
+- **Hostile Gatekeeper** — screens calls, not the decision-maker
+- **Interested CTO** — actively evaluating solutions, technically demanding
+- **Budget-Blocked Director** — genuinely interested but in a spending freeze
 
-**Self-improvement loop is functional and measurable.** The system runs
-multiple iterations, and you can observe script changes directly tied to
-call outcomes. Each version is saved with a changelog citing evidence.
+Personas are randomly assigned each call. The agent never knows which persona it will face.
 
-**Clean separation of concerns.** Each module has a single responsibility:
-the agent talks, the evaluator judges, the optimizer improves. This makes
-the system easy to extend.
+## Improvement Logic
 
-**Cost-efficient design.** DeepSeek-V3 is ~¥1/million input tokens. A full
-3-iteration demo with 9 calls costs roughly $0.02–0.05 total.
-
-## Key Trade-Offs
-
-| Decision | Benefit | Cost |
-|----------|---------|------|
-| DeepSeek API vs local model | No GPU needed, cheap, fast | API dependency, latency |
-| LLM-simulated customers vs real humans | Reproducible, fast iteration | May not capture real human unpredictability |
-| Batch optimization (per iteration) vs per-call | More stable signal, fewer API calls | Slower adaptation |
-| Text-first with optional voice | Testable, debuggable, faster dev | Less impressive demo without voice |
-| YAML scripts vs database | Human-readable, easy to diff/review | Less structured querying |
-| SQLite vs PostgreSQL | Zero setup, portable | Not suitable for production scale |
+After each iteration, the runner sends all transcripts and aggregated metrics to the Dify refiner workflow. The workflow analyzes what worked, what failed, and produces a revised script. Each script version is saved as `scripts/v{N}.yaml` for diffing and review.
 
 ## Limitations
 
-1. **Simulated customers are not real customers.** LLM-as-customer tends to be
-   more "reasonable" than real humans. The improvement signal may not transfer
-   perfectly to real-world calls.
-
-2. **No A/B testing framework.** Currently, we test the new script on new calls
-   but against potentially different personas. A proper evaluation would test
-   old vs new script on the same persona set.
-
-3. **Script optimization quality depends on LLM capability.** If the optimizer
-   hallucinates or misattributes failures, the script could regress.
-
-4. **Voice layer is mock-level.** Real production would need interruption handling,
-   silence detection, latency optimization, and telephony integration (e.g., Twilio).
+1. **Simulated customers are not real customers.** LLM-as-customer tends to be more "reasonable" than real humans. Improvements may not transfer perfectly to real-world calls.
+2. **Rule-based scoring is approximate.** Keyword matching can miss nuance. An LLM-based evaluator would be more accurate but slower and costlier.
+3. **No A/B testing.** New scripts are tested against random personas, not the same set. A proper evaluation would control for persona variation.
+4. **Script optimization quality depends on the Dify workflow's LLM.** If the optimizer misattributes failures, the script could regress.
+5. **No rollback mechanism.** If a new script performs worse, the system doesn't automatically revert.
 
 ## What I'd Add With More Time
 
-- **A/B testing:** Run the same persona set against old and new scripts to measure
-  improvement rigorously.
-- **Dify/n8n workflow:** Port the orchestration into Dify for visual flow editing and
-  easier handoff to non-technical users.
-- **Real voice pipeline:** FunASR for STT + CosyVoice for TTS, connected via WebSocket
-  for real-time conversation.
-- **Prompt versioning and rollback:** If a script version performs worse, auto-rollback.
-- **Dashboard:** A simple web UI showing metrics across iterations.
-- **Multi-product support:** Parameterize so the same system works for different products.
+- **A/B testing:** Run identical persona sets against old and new scripts to measure improvement rigorously
+- **LLM-based evaluation:** Replace or supplement the rule-based scorer with an LLM evaluator for richer feedback
+- **Prompt versioning and rollback:** Auto-revert if a script version scores lower than its predecessor
+- **Real voice pipeline:** Add TTS/STT for realistic spoken conversation simulation
+- **Dashboard:** Web UI showing metrics, transcripts, and script diffs across iterations
+- **Multi-product support:** Parameterize so the same system works for different products and industries
