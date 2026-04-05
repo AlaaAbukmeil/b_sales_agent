@@ -2,6 +2,7 @@
 Dify API client — handles chat messages and workflow runs.
 """
 
+import json
 import requests
 import time
 from typing import Optional
@@ -41,6 +42,11 @@ class DifyClient:
                     print(f"  ⏳ Rate limited. Waiting {wait}s (attempt {attempt}/{self.max_retries})")
                     time.sleep(wait)
                     continue
+                if resp.status_code in (502, 503, 504):
+                    wait = 2 ** attempt
+                    print(f"  ⏳ Server error {resp.status_code}. Waiting {wait}s (attempt {attempt}/{self.max_retries})")
+                    time.sleep(wait)
+                    continue
                 raise
             except requests.exceptions.Timeout:
                 if attempt < self.max_retries:
@@ -72,26 +78,63 @@ class DifyClient:
             "conversation_id": data.get("conversation_id", ""),
         }
 
-    def run_workflow(self, inputs: dict, user: str = "sim-user") -> str:
-        """Trigger a Dify workflow and return the final output text."""
+    def run_workflow(self, inputs: dict, user: str = "sim-user") -> dict:
+        """
+        Call a Dify Workflow app using streaming mode to avoid 504 timeouts.
+        Collects the streamed SSE events and returns the final outputs dict.
+        """
+        url = f"{self.base_url}/workflows/run"
         payload = {
             "inputs": inputs,
-            "response_mode": "blocking",
+            "response_mode": "streaming",
             "user": user,
         }
-        data = self._request("POST", "/workflows/run", payload, timeout=180)
 
-        # Extract output from workflow response
-        outputs = data.get("data", {}).get("outputs", {})
+        for attempt in range(1, self.max_retries + 1):
+            try:
+                resp = requests.post(
+                    url,
+                    headers=self.headers,
+                    json=payload,
+                    timeout=300,
+                    stream=True,
+                )
+                resp.raise_for_status()
 
-        # Try common output key names
-        for key in ["text", "result", "output", "script"]:
-            if key in outputs:
-                return outputs[key]
+                outputs = {}
+                for line in resp.iter_lines(decode_unicode=True):
+                    if not line or not line.startswith("data: "):
+                        continue
+                    data_str = line[6:]  # strip "data: " prefix
+                    try:
+                        event = json.loads(data_str)
+                    except json.JSONDecodeError:
+                        continue
 
-        # Fallback: return first string value found
-        for value in outputs.values():
-            if isinstance(value, str):
-                return value
+                    event_type = event.get("event")
 
-        return str(outputs)
+                    if event_type == "workflow_finished":
+                        outputs = event.get("data", {}).get("outputs", {})
+                        break
+                    elif event_type == "error":
+                        raise Exception(f"Workflow error: {event.get('message', 'unknown')}")
+
+                return outputs
+
+            except requests.exceptions.HTTPError:
+                status = resp.status_code
+                if status in (429, 502, 503, 504):
+                    wait = 2 ** attempt
+                    print(f"  ⏳ Server error {status}. Waiting {wait}s (attempt {attempt}/{self.max_retries})")
+                    time.sleep(wait)
+                    continue
+                raise
+            except requests.exceptions.Timeout:
+                if attempt < self.max_retries:
+                    wait = 2 ** attempt
+                    print(f"  ⏳ Timeout. Retrying in {wait}s (attempt {attempt}/{self.max_retries})")
+                    time.sleep(wait)
+                    continue
+                raise
+
+        raise Exception(f"Workflow failed after {self.max_retries} retries")

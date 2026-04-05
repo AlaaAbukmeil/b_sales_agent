@@ -15,6 +15,16 @@ from src.pipeline.scorer import CallScorer
 from src.storage.database import Database
 
 
+def _str_representer(dumper, data):
+    """Use literal block style (|) for multiline strings in YAML output."""
+    if "\n" in data:
+        return dumper.represent_scalar("tag:yaml.org,2002:str", data, style="|")
+    return dumper.represent_scalar("tag:yaml.org,2002:str", data)
+
+
+yaml.add_representer(str, _str_representer)
+
+
 def load_config(path: str = "config.yaml") -> dict:
     with open(path, "r") as f:
         return yaml.safe_load(f)
@@ -29,8 +39,14 @@ def load_script(path: str = "scripts/v1.yaml") -> str:
 def save_script(script: str, version: int):
     os.makedirs("scripts", exist_ok=True)
     path = f"scripts/v{version}.yaml"
-    with open(path, "w") as f:
-        yaml.dump({"script": script, "version": version}, f, default_flow_style=False)
+    with open(path, "w", encoding="utf-8") as f:
+        yaml.dump(
+            {"script": script, "version": version},
+            f,
+            default_flow_style=False,
+            allow_unicode=True,
+            sort_keys=False,
+        )
     print(f"  💾 Saved {path}")
 
 
@@ -38,19 +54,16 @@ def run_call(agent: SalesAgent, customer: CustomerSimulator, max_turns: int) -> 
     """Run a single simulated call and return the transcript."""
     transcript = []
 
-    # Agent opens
     agent_msg = agent.open()
     transcript.append({"role": "agent", "message": agent_msg})
     print(f"    🤖 Agent: {agent_msg[:120]}{'...' if len(agent_msg) > 120 else ''}")
 
     for turn in range(max_turns):
-        # Customer responds
         time.sleep(0.5)  # small delay to avoid rate limits
         cust_msg = customer.respond(agent_msg)
         transcript.append({"role": "customer", "message": cust_msg})
         print(f"    👤 Customer: {cust_msg[:120]}{'...' if len(cust_msg) > 120 else ''}")
 
-        # Check for call-ending signals
         end_phrases = [
             "goodbye", "good bye", "bye ", "bye.", "hang up",
             "end call", "gotta go", "have to go",
