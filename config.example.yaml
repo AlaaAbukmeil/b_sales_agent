@@ -9,6 +9,17 @@ simulation:
   max_turns_per_call: 14
   num_iterations: 3
 
+elevenlabs:
+  api_key: "sk_XXXXXXXXXXXXXX"
+  voice_id: "zYcjlYFOd3taleS0gkk3"
+  model_id: "eleven_turbo_v2"    
+
+voice:
+  enabled: true
+  speed: 1.5            
+  record_seconds: 8
+  sample_rate: 16000
+
 product:
   name: "CloudSync Pro"
   description: "An enterprise cloud storage and collaboration platform"
@@ -18,7 +29,3 @@ product:
     - "Real-time collaboration"
     - "99.99% uptime SLA"
     - "Integrations with 200+ tools"
-
-voice:
-  enabled: false
-  tts_voice: "en-US-AriaNeural"

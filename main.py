@@ -1,6 +1,6 @@
 """
 Sales Call Simulation — Main Entry Point
-Orchestrates simulated cold calls via Dify, scores them, and refines the script.
+Single entry point: choose between automated simulation, interactive call, or report.
 """
 
 import argparse
@@ -31,7 +31,13 @@ def main():
     parser.add_argument(
         "--report",
         action="store_true",
-        help="Print a summary report from the database instead of running simulation",
+        help="Print a summary report from the database instead of running",
+    )
+    parser.add_argument(
+        "--mode",
+        choices=["simulate", "interactive"],
+        default=None,
+        help="Skip the menu and go straight to a mode",
     )
     args = parser.parse_args()
 
@@ -39,30 +45,52 @@ def main():
         print_report()
         return
 
-    # Load config and apply overrides
     config = load_config(args.config)
     if args.iterations is not None:
         config["simulation"]["num_iterations"] = args.iterations
     if args.calls is not None:
         config["simulation"]["calls_per_iteration"] = args.calls
 
-    print("=" * 60)
-    print("  SALES CALL SIMULATION ENGINE")
-    print("=" * 60)
-    print(f"  Iterations:       {config['simulation']['num_iterations']}")
-    print(f"  Calls/iteration:  {config['simulation']['calls_per_iteration']}")
-    print(f"  Max turns/call:   {config['simulation']['max_turns_per_call']}")
-    print(f"  Dify base URL:    {config['dify']['base_url']}")
-    print("=" * 60)
+    # Determine mode
+    mode = args.mode
+    if mode is None:
+        print("=" * 50)
+        print("  SALES CALL ENGINE")
+        print("=" * 50)
+        print("  1) Simulated  — automated calls, scoring, and script refinement")
+        print("  2) Interactive — you play the customer against the AI agent")
+        print("  3) Report     — view results from previous runs")
+        print()
+        choice = input("  Choose [1/2/3]: ").strip()
+        if choice == "2":
+            mode = "interactive"
+        elif choice == "3":
+            print_report()
+            return
+        else:
+            mode = "simulate"
 
-    try:
-        run_simulation(config)
-    except KeyboardInterrupt:
-        print("\n\n⚠️  Simulation interrupted by user.")
-        sys.exit(1)
-    except Exception as e:
-        print(f"\n❌ Simulation failed: {e}")
-        raise
+    if mode == "interactive":
+        from src.pipeline.interactive import run_interactive
+        run_interactive(config)
+    else:
+        print("=" * 60)
+        print("  SALES CALL SIMULATION ENGINE")
+        print("=" * 60)
+        print(f"  Iterations:       {config['simulation']['num_iterations']}")
+        print(f"  Calls/iteration:  {config['simulation']['calls_per_iteration']}")
+        print(f"  Max turns/call:   {config['simulation']['max_turns_per_call']}")
+        print(f"  Dify base URL:    {config['dify']['base_url']}")
+        print("=" * 60)
+
+        try:
+            run_simulation(config)
+        except KeyboardInterrupt:
+            print("\n\n⚠️  Simulation interrupted by user.")
+            sys.exit(1)
+        except Exception as e:
+            print(f"\n❌ Simulation failed: {e}")
+            raise
 
 
 def print_report():

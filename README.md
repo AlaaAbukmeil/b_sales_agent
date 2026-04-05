@@ -59,15 +59,31 @@ pip install -r requirements.txt
 ## Running
 
 ```bash
-# Full automated simulation (default: 3 iterations × 3 calls)
+# Launch the menu (choose: Simulated, Interactive, or Report)
 python main.py
 
+# Skip the menu — go straight to simulation
+python main.py --mode simulate
+
+# Skip the menu — go straight to interactive call
+python main.py --mode interactive
+
 # Override iteration count and calls per iteration
-python main.py --iterations 5 --calls 5
+python main.py --mode simulate --iterations 5 --calls 5
 
 # View report from most recent run
 python main.py --report
 ```
+
+### Interactive Mode
+
+In interactive mode, **you** play the customer against the AI sales agent.
+If ElevenLabs is configured in `config.yaml`, you can choose between:
+
+- **Voice** — the agent speaks via TTS, you respond by voice (STT)
+- **Text** — type your responses in the terminal
+
+If ElevenLabs is not configured, it defaults to text mode.
 
 ## Configuration
 
@@ -89,8 +105,8 @@ simulation:
 ## Project Structure
 
 ```
-├── main.py                        # Entry point: CLI with --iterations, --calls, --report
-├── config.yaml                    # Dify API keys and simulation settings
+├── main.py                        # Single entry point: menu → simulate / interactive / report
+├── config.yaml                    # Dify + ElevenLabs API keys, simulation settings
 ├── config.example.yaml            # Template config (no secrets)
 ├── requirements.txt               # Python dependencies
 ├── image.png                      # Architecture diagram
@@ -109,12 +125,17 @@ simulation:
 │   │   └── customer.py            # Customer simulator: persona selection + Dify chatbot
 │   ├── pipeline/
 │   │   ├── __init__.py
-│   │   ├── runner.py              # Main simulation loop: calls → score → refine → repeat
+│   │   ├── runner.py              # Automated simulation loop: calls → score → refine
+│   │   ├── interactive.py         # Interactive mode: user plays customer (voice or text)
 │   │   ├── scorer.py              # Rule-based call transcript scoring
 │   │   └── refiner.py             # Triggers Dify workflow for script improvement
-│   └── storage/
+│   ├── storage/
+│   │   ├── __init__.py
+│   │   └── database.py            # SQLite: stores calls, scores, iterations
+│   └── voice/
 │       ├── __init__.py
-│       └── database.py            # SQLite: stores calls, scores, iterations
+│       ├── tts.py                 # ElevenLabs text-to-speech
+│       └── stt.py                 # ElevenLabs speech-to-text
 └── README.md
 ```
 
@@ -161,6 +182,5 @@ After each iteration, the runner sends all transcripts and aggregated metrics to
 - **A/B testing:** Run identical persona sets against old and new scripts to measure improvement rigorously
 - **LLM-based evaluation:** Replace or supplement the rule-based scorer with an LLM evaluator for richer feedback
 - **Prompt versioning and rollback:** Auto-revert if a script version scores lower than its predecessor
-- **Real voice pipeline:** Add TTS/STT for realistic spoken conversation simulation
 - **Dashboard:** Web UI showing metrics, transcripts, and script diffs across iterations
 - **Multi-product support:** Parameterize so the same system works for different products and industries
