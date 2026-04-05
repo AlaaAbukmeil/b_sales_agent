@@ -1,7 +1,8 @@
-deepseek:
-  api_key: "sk-YOUR-KEY-HERE"
-  base_url: "https://api.deepseek.com"
-  model: "deepseek-chat"
+dify:
+  base_url: "https://api.dify.ai/v1"
+  sales_agent_api_key: "app-XXXXXXXXXXXXXX"  
+  customer_api_key: "app-XXXXXXXXXXXXXX"       
+  refiner_api_key: "app-XXXXXXXXXXXXXX"        
 
 simulation:
   calls_per_iteration: 3
