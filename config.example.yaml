@@ -1,0 +1,23 @@
+deepseek:
+  api_key: "sk-YOUR-KEY-HERE"
+  base_url: "https://api.deepseek.com"
+  model: "deepseek-chat"
+
+simulation:
+  calls_per_iteration: 3
+  max_turns_per_call: 14
+  num_iterations: 3
+
+product:
+  name: "CloudSync Pro"
+  description: "An enterprise cloud storage and collaboration platform"
+  price: "$49/user/month"
+  key_features:
+    - "End-to-end encryption"
+    - "Real-time collaboration"
+    - "99.99% uptime SLA"
+    - "Integrations with 200+ tools"
+
+voice:
+  enabled: false
+  tts_voice: "en-US-AriaNeural"
