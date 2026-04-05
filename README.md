@@ -1,10 +1,16 @@
 ﻿# G1: Self-Improving Call Center Agent
 
+## Demo
+
+https://drive.google.com/file/d/1JHaU5itrQyvJu4rlTQdJP2QdHiJUDVkY/view?usp=drive_link
+
 An AI agent that conducts simulated sales calls, evaluates outcomes, and
 iteratively improves its own sales script through automated feedback loops.
 
 ## Architecture
-![alt text](image.png)
+![alt text](llm_simulator.png)
+![alt text](interactive_simulator.png)
+
 
 ## Self-Improvement Loop
 

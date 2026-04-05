@@ -1,0 +1,42 @@
+script: |-
+  OPENING:
+  "Hi [Name], this is [Your Name] from [Company]. I'm calling because we help businesses like yours reduce their monthly software costs while getting better features — is now a good time for a quick chat?"
+
+  DISCOVERY QUESTIONS:
+  1.  "What's the main software platform your team uses for [their function, e.g., project management] right now?"
+  2.  "On a scale of 1-10, how satisfied are you with it, and what's holding it back from being a 10?"
+  3.  "What's the biggest bottleneck or time-waster your team deals with daily?"
+  4.  "If you could fix one thing about your current tool tomorrow, what would it be?"
+  5.  "How many people on your team need access, and what's your approximate monthly budget for this?"
+  6.  (If they mention cost) "When you think about cost, is it more about the upfront price or the long-term value you're getting?"
+
+  VALUE PROPOSITIONS:
+  *   **Feature:** Unified dashboard. **Outcome:** "Your team stops switching between 5 different tabs and saves about 10 hours a week on manual updates."
+  *   **Feature:** Automated reporting. **Outcome:** "You eliminate the monthly 8-hour report grind, so your managers get real-time data to make faster decisions."
+  *   **Feature:** Granular permissions. **Outcome:** "You control exactly who sees what, which cuts down on internal confusion and security risks."
+  *   **Feature:** Our pricing model. **Outcome:** "You consolidate three separate tool costs into one predictable bill, typically saving clients 20-30%."
+
+  OBJECTION RESPONSES:
+  *   **"We're happy with what we have."** → "That's great to hear — most people we help said the same thing at first. What I've found is they're often happy *enough*, but still dealing with a few nagging inefficiencies. Is there any small annoyance you just live with because switching seems hard?"
+  *   **"It's too expensive."** → "I get that. Can I ask: is it the total number that's concerning, or are you unsure if the value justifies moving off your current system? Often, we find the time savings alone cover the cost within 90 days."
+  *   **"We don't have time to switch."** → "Totally valid. Our entire onboarding is built for that. We do the heavy lifting — data migration, team training — in under a week with zero downtime. Would a 15-minute demo change your mind on the time commitment?"
+  *   **"Send me some info."** → "I'm happy to. To make sure it's relevant, what are the top 1-2 things you'd need to see in a proposal to even consider a change?"
+
+  CLOSING TECHNIQUES:
+  1.  **The Pilot Close:** "Based on what you've shared, I'm confident we can solve [their specific pain point]. Why don't we start with a 30-day pilot for your core team? You'll get the full platform, our team does the setup, and you only pay if you decide to keep it. Can we get that started next week?"
+  2.  **The "Or" Close:** "To move forward, would you prefer we schedule the implementation kickoff for next Monday, or is Wednesday better for your team's calendar?"
+  3.  **The Value Summary Close:** "So, if we can save your team those 10 hours a week, eliminate the reporting headache, and still come in under your current spend, does it make sense to move to the next step?"
+
+  CALL FLOW:
+  1.  **Opening:** Quick, value-based intro.
+  2.  **Qualify:** Confirm authority, budget, need (using discovery questions 1 & 5).
+  3.  **Discover:** Dig into pains and current state (questions 2, 3, 4).
+  4.  **Present:** Match 1-2 value propositions directly to their stated pains.
+  5.  **Handle Objections:** Use prepared responses; pivot back to value.
+  6.  **Close:** Use the closing technique that fits the conversation momentum.
+
+  TONE GUIDELINES:
+  *   **Pace:** Confident and steady, not rushed. Pause after asking questions.
+  *   **Energy:** Helpful consultant, not a pushy salesperson. Sound like you're solving a problem, not selling a product.
+  *   **Style:** Conversational. Use "you" and "your team" often. Mirror their terminology. If they say "it's clunky," you say, "Yeah, that clunkiness is exactly what we fix."
+version: 2

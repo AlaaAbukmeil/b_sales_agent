@@ -255,11 +255,27 @@ class CallScorer:
             "let's do", "let's schedule", "schedule a demo", "book a demo",
             "sign me up", "i'll try", "start a trial", "set up a trial",
             "sounds good, let's", "i'm in", "count me in",
-            "tuesday works", "wednesday works", "thursday works",
-            "friday works", "monday works", "that works",
             "send me the trial", "send the link", "send me the link",
+            "yes, please", "yes please", "sure, let's", "absolutely",
         ]
-        return any(phrase in all_customer_text for phrase in positive_outcomes)
+
+        # Check exact phrases
+        if any(phrase in all_customer_text for phrase in positive_outcomes):
+            return True
+
+        # Check if customer agreed to a specific day/time
+        days = ["monday", "tuesday", "wednesday", "thursday", "friday"]
+        agreement_words = ["works", "good", "great", "perfect", "fine", "ok", "sure"]
+        for day in days:
+            if day in all_customer_text:
+                if any(w in all_customer_text for w in agreement_words):
+                    return True
+
+        # Check if customer gave their email (strong commitment signal)
+        if re.search(r"[\w.+-]+@[\w-]+\.[\w.]+", all_customer_text):
+            return True
+
+        return False
 
     def _empty_score(self) -> Dict:
         return {
