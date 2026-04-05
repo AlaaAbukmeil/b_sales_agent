@@ -190,3 +190,82 @@ After each iteration, the runner sends all transcripts and aggregated metrics to
 - **Prompt versioning and rollback:** Auto-revert if a script version scores lower than its predecessor
 - **Dashboard:** Web UI showing metrics, transcripts, and script diffs across iterations
 - **Multi-product support:** Parameterize so the same system works for different products and industries
+
+## Cost Analysis & Business Impact
+
+### Per-Component Pricing
+
+| Component       | Pricing Model                          | Rate                                      |
+|-----------------|----------------------------------------|-------------------------------------------|
+| DeepSeek V3     | Pay-per-token via Dify                 | $0.27 / 1M input tokens, $1.10 / 1M output tokens |
+| DeepSeek V3 (cache hit) | Dify prompt caching              | $0.07 / 1M input tokens                  |
+| ElevenLabs TTS  | Subscription (Starter plan)            | $5/mo for 30,000 characters              |
+| ElevenLabs STT (Scribe v1) | Pay-per-use                   | ~$0.40 / hour of audio                   |
+| Dify            | Self-hosted (Docker)                   | $0 (open-source)                          |
+| SQLite          | Local                                  | $0                                        |
+| Compute         | Local machine                          | $0 (existing hardware)                    |
+
+### Cost Per Simulated Call (LLM-vs-LLM, No Voice)
+
+A single simulated call averages ~14 turns. Each turn involves two LLM roundtrips (one for the sales agent, one for the customer simulator), plus growing conversation context.
+
+| Item                        | Tokens (est.)         | Cost         |
+|-----------------------------|-----------------------|--------------|
+| Sales agent (14 turns)      | ~4,000 in / ~2,800 out | $0.0042     |
+| Customer simulator (14 turns)| ~4,000 in / ~2,800 out | $0.0042    |
+| Script refiner (per call share) | ~3,000 in / ~1,000 out | $0.0012 |
+| **Total per simulated call** |                       | **~$0.01**  |
+
+### Cost Per Full Simulation Run (3 Iterations × 3 Calls)
+
+| Item                          | Count | Unit Cost | Total    |
+|-------------------------------|-------|-----------|----------|
+| Simulated calls               | 9     | $0.01     | $0.09    |
+| Script refinement workflows   | 3     | $0.004    | $0.012   |
+| **Total per simulation run**  |       |           | **~$0.10** |
+
+Running a complete 3-iteration self-improvement cycle costs roughly **10 cents**.
+
+### Cost Per Interactive Voice Call (Human-on-the-Loop)
+
+When a user plays the customer in interactive mode with voice enabled:
+
+| Item                          | Estimate              | Cost         |
+|-------------------------------|-----------------------|--------------|
+| DeepSeek (sales agent, 14 turns) | ~4,000 in / ~2,800 out | $0.004   |
+| ElevenLabs TTS (agent speech) | ~3,500 characters     | $0.02        |
+| ElevenLabs STT (user speech)  | ~2–3 min audio        | $0.02        |
+| **Total per voice call**      |                       | **~$0.04**   |
+
+### Comparison to Human Call Center Agent
+
+| Metric                        | Human Agent           | AI Agent (This System) | Ratio         |
+|-------------------------------|-----------------------|------------------------|---------------|
+| Cost per conversation         | $2.00–3.50            | $0.01–0.04             | **50–350×** cheaper |
+| Calls per hour                | 8–12                  | Unlimited (parallel)   | —             |
+| Availability                  | 8 hr shift            | 24/7                   | 3× uptime     |
+| Script consistency            | Varies by rep         | 100% consistent        | —             |
+| Ramp-up time for new script   | Days of retraining    | Instant (YAML swap)    | —             |
+| Self-improvement cycle        | Weeks (manual QA)     | ~5 min (automated)     | —             |
+
+Assumptions: Human agent fully loaded cost of $18–25/hr (US mid-market BPO rate), handling 8–12 connected conversations per hour. AI costs use DeepSeek V3 pricing as of April 2025.
+
+### Monthly Projection at Scale
+
+For a hypothetical deployment running 100 outbound calls/day:
+
+| Scenario                      | Monthly Volume | Monthly Cost   |
+|-------------------------------|----------------|----------------|
+| AI — text only (simulated)    | 3,000 calls    | ~$30           |
+| AI — voice (interactive)      | 3,000 calls    | ~$120          |
+| Human — 2 full-time agents    | 3,000 calls    | ~$7,000–9,000  |
+
+The AI system achieves **60–75× cost reduction** at this volume while maintaining the ability to self-optimize its script every night at negligible additional cost (~$0.10 per improvement cycle).
+
+### Why DeepSeek
+
+DeepSeek V3 was chosen deliberately over GPT-4o or Claude for the agent and simulator roles. At $0.27/1M input tokens, it is roughly 10× cheaper than GPT-4o ($2.50/1M) and 11× cheaper than Claude 3.5 Sonnet ($3.00/1M), while performing competitively on conversational tasks. For a system that runs many multi-turn conversations in a loop, this cost difference compounds quickly — a full simulation run would cost ~$1.00 with GPT-4o vs. ~$0.10 with DeepSeek.
+
+### Cost of Improvement
+
+One of the system's most valuable properties is that **self-improvement is nearly free**. Each optimization cycle (analyze transcripts → rewrite script) costs ~$0.004 via the Dify refiner workflow. A traditional call center would spend hundreds of dollars in manager time, QA review, and retraining sessions to achieve the same script revision. This means the system can afford to optimize aggressively — running nightly improvement cycles or even per-shift adjustments — with no meaningful cost impact.
